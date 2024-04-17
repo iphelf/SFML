@@ -31,6 +31,7 @@
 
 #include <SFML/System/Err.hpp>
 
+#include <array>
 #include <optional>
 #include <ostream>
 
@@ -68,15 +69,15 @@ AudioDevice::AudioDevice()
             alcMakeContextCurrent(audioContext);
 
             // Apply the listener properties the user might have set
-            float orientation[] = {listenerDirection.x,
-                                   listenerDirection.y,
-                                   listenerDirection.z,
-                                   listenerUpVector.x,
-                                   listenerUpVector.y,
-                                   listenerUpVector.z};
+            std::array orientation = {listenerDirection.x,
+                                      listenerDirection.y,
+                                      listenerDirection.z,
+                                      listenerUpVector.x,
+                                      listenerUpVector.y,
+                                      listenerUpVector.z};
             alCheck(alListenerf(AL_GAIN, listenerVolume * 0.01f));
             alCheck(alListener3f(AL_POSITION, listenerPosition.x, listenerPosition.y, listenerPosition.z));
-            alCheck(alListenerfv(AL_ORIENTATION, orientation));
+            alCheck(alListenerfv(AL_ORIENTATION, orientation.data()));
         }
         else
         {
@@ -196,9 +197,9 @@ void AudioDevice::setDirection(const Vector3f& direction)
 {
     if (audioContext)
     {
-        float orientation[] =
+        std::array orientation =
             {direction.x, direction.y, direction.z, listenerUpVector.x, listenerUpVector.y, listenerUpVector.z};
-        alCheck(alListenerfv(AL_ORIENTATION, orientation));
+        alCheck(alListenerfv(AL_ORIENTATION, orientation.data()));
     }
 
     listenerDirection = direction;
@@ -217,9 +218,9 @@ void AudioDevice::setUpVector(const Vector3f& upVector)
 {
     if (audioContext)
     {
-        float orientation[] =
+        std::array orientation =
             {listenerDirection.x, listenerDirection.y, listenerDirection.z, upVector.x, upVector.y, upVector.z};
-        alCheck(alListenerfv(AL_ORIENTATION, orientation));
+        alCheck(alListenerfv(AL_ORIENTATION, orientation.data()));
     }
 
     listenerUpVector = upVector;

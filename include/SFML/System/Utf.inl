@@ -56,7 +56,7 @@ In Utf<8>::decode(In begin, In end, std::uint32_t& output, std::uint32_t replace
 {
     // clang-format off
     // Some useful precomputed data
-    static constexpr int trailing[256] =
+    static constexpr std::array<std::uint8_t, 256> trailing =
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -68,14 +68,14 @@ In Utf<8>::decode(In begin, In end, std::uint32_t& output, std::uint32_t replace
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5
     };
 
-    static constexpr std::uint32_t offsets[6] =
+    static constexpr std::array<std::uint32_t, 6> offsets =
     {
         0x00000000, 0x00003080, 0x000E2080, 0x03C82080, 0xFA082080, 0x82082080
     };
     // clang-format on
 
     // decode the character
-    const int trailingBytes = trailing[static_cast<std::uint8_t>(*begin)];
+    const auto trailingBytes = trailing[static_cast<std::uint8_t>(*begin)];
     if (trailingBytes < std::distance(begin, end))
     {
         output = 0;
