@@ -20,14 +20,15 @@
 #include <cstdint>
 #include <cstring>
 
-
 ////////////////////////////////////////////////////////////
 // Helper functions
 ////////////////////////////////////////////////////////////
 namespace
 {
+// NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
 using Vec3   = float[3];
 using Matrix = float[4][4];
+// NOLINTEND(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
 
 // Multiply 2 matrices
 void matrixMultiply(Matrix& result, const Matrix& left, const Matrix& right)
@@ -721,7 +722,7 @@ public:
         deviceQueueCreateInfo.pQueuePriorities        = &queuePriority;
 
         // Enable the swapchain extension
-        const char* extensions[1] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+        std::array extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
         // Enable anisotropic filtering
         VkPhysicalDeviceFeatures physicalDeviceFeatures = VkPhysicalDeviceFeatures();
@@ -729,8 +730,8 @@ public:
 
         VkDeviceCreateInfo deviceCreateInfo      = VkDeviceCreateInfo();
         deviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        deviceCreateInfo.enabledExtensionCount   = 1;
-        deviceCreateInfo.ppEnabledExtensionNames = extensions;
+        deviceCreateInfo.enabledExtensionCount   = static_cast<std::uint32_t>(extensions.size());
+        deviceCreateInfo.ppEnabledExtensionNames = extensions.data();
         deviceCreateInfo.queueCreateInfoCount    = 1;
         deviceCreateInfo.pQueueCreateInfos       = &deviceQueueCreateInfo;
         deviceCreateInfo.pEnabledFeatures        = &physicalDeviceFeatures;
@@ -994,7 +995,7 @@ public:
     // Setup renderpass and its subpass dependencies
     void setupRenderpass()
     {
-        VkAttachmentDescription attachmentDescriptions[2];
+        std::array<VkAttachmentDescription, 2> attachmentDescriptions{};
 
         // Color attachment
         attachmentDescriptions[0]                = VkAttachmentDescription();
@@ -1043,8 +1044,8 @@ public:
 
         VkRenderPassCreateInfo renderPassCreateInfo = VkRenderPassCreateInfo();
         renderPassCreateInfo.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassCreateInfo.attachmentCount        = 2;
-        renderPassCreateInfo.pAttachments           = attachmentDescriptions;
+        renderPassCreateInfo.attachmentCount        = static_cast<std::uint32_t>(attachmentDescriptions.size());
+        renderPassCreateInfo.pAttachments           = attachmentDescriptions.data();
         renderPassCreateInfo.subpassCount           = 1;
         renderPassCreateInfo.pSubpasses             = &subpassDescription;
         renderPassCreateInfo.dependencyCount        = 1;
@@ -1061,7 +1062,7 @@ public:
     // Set up uniform buffer and texture sampler descriptor set layouts
     void setupDescriptorSetLayout()
     {
-        VkDescriptorSetLayoutBinding descriptorSetLayoutBindings[2];
+        std::array<VkDescriptorSetLayoutBinding, 2> descriptorSetLayoutBindings{};
 
         // Layout binding for uniform buffer
         descriptorSetLayoutBindings[0]                 = VkDescriptorSetLayoutBinding();
@@ -1079,8 +1080,8 @@ public:
 
         VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = VkDescriptorSetLayoutCreateInfo();
         descriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        descriptorSetLayoutCreateInfo.bindingCount = 2;
-        descriptorSetLayoutCreateInfo.pBindings    = descriptorSetLayoutBindings;
+        descriptorSetLayoutCreateInfo.bindingCount = static_cast<std::uint32_t>(descriptorSetLayoutBindings.size());
+        descriptorSetLayoutCreateInfo.pBindings    = descriptorSetLayoutBindings.data();
 
         // Create descriptor set layout
         if (vkCreateDescriptorSetLayout(device, &descriptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
@@ -1116,7 +1117,7 @@ public:
         vertexInputBindingDescription.inputRate                       = VK_VERTEX_INPUT_RATE_VERTEX;
 
         // Set up how the vertex buffer data is interpreted as attributes by the vertex shader
-        VkVertexInputAttributeDescription vertexInputAttributeDescriptions[3];
+        std::array<VkVertexInputAttributeDescription, 3> vertexInputAttributeDescriptions{};
 
         // Position attribute
         vertexInputAttributeDescriptions[0]          = VkVertexInputAttributeDescription();
@@ -1143,8 +1144,9 @@ public:
         vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputStateCreateInfo.vertexBindingDescriptionCount   = 1;
         vertexInputStateCreateInfo.pVertexBindingDescriptions      = &vertexInputBindingDescription;
-        vertexInputStateCreateInfo.vertexAttributeDescriptionCount = 3;
-        vertexInputStateCreateInfo.pVertexAttributeDescriptions    = vertexInputAttributeDescriptions;
+        vertexInputStateCreateInfo.vertexAttributeDescriptionCount = static_cast<std::uint32_t>(
+            vertexInputAttributeDescriptions.size());
+        vertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescriptions.data();
 
         // We want to generate a triangle list with our vertex data
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = VkPipelineInputAssemblyStateCreateInfo();
@@ -1220,8 +1222,8 @@ public:
 
         VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = VkGraphicsPipelineCreateInfo();
         graphicsPipelineCreateInfo.sType                        = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        graphicsPipelineCreateInfo.stageCount                   = 2;
-        graphicsPipelineCreateInfo.pStages                      = shaderStages;
+        graphicsPipelineCreateInfo.stageCount                   = static_cast<std::uint32_t>(shaderStages.size());
+        graphicsPipelineCreateInfo.pStages                      = shaderStages.data();
         graphicsPipelineCreateInfo.pVertexInputState            = &vertexInputStateCreateInfo;
         graphicsPipelineCreateInfo.pInputAssemblyState          = &inputAssemblyStateCreateInfo;
         graphicsPipelineCreateInfo.pViewportState               = &pipelineViewportStateCreateInfo;
@@ -1258,9 +1260,9 @@ public:
         for (std::size_t i = 0; i < swapchainFramebuffers.size(); ++i)
         {
             // Each framebuffer consists of a corresponding swapchain image and the shared depth image
-            VkImageView attachments[] = {swapchainImageViews[i], depthImageView};
+            std::array attachments = {swapchainImageViews[i], depthImageView};
 
-            framebufferCreateInfo.pAttachments = attachments;
+            framebufferCreateInfo.pAttachments = attachments.data();
 
             // Create the framebuffer
             if (vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &swapchainFramebuffers[i]) != VK_SUCCESS)
@@ -2147,7 +2149,7 @@ public:
     void setupDescriptorPool()
     {
         // We need to allocate as many descriptor sets as we have frames in flight
-        VkDescriptorPoolSize descriptorPoolSizes[2];
+        std::array<VkDescriptorPoolSize, 2> descriptorPoolSizes{};
 
         descriptorPoolSizes[0]                 = VkDescriptorPoolSize();
         descriptorPoolSizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -2159,8 +2161,8 @@ public:
 
         VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = VkDescriptorPoolCreateInfo();
         descriptorPoolCreateInfo.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        descriptorPoolCreateInfo.poolSizeCount              = 2;
-        descriptorPoolCreateInfo.pPoolSizes                 = descriptorPoolSizes;
+        descriptorPoolCreateInfo.poolSizeCount              = static_cast<std::uint32_t>(descriptorPoolSizes.size());
+        descriptorPoolCreateInfo.pPoolSizes                 = descriptorPoolSizes.data();
         descriptorPoolCreateInfo.maxSets                    = static_cast<std::uint32_t>(swapchainImages.size());
 
         // Create the descriptor pool
@@ -2196,7 +2198,7 @@ public:
         // For every descriptor set, set up the bindings to our uniform buffer and texture sampler
         for (std::size_t i = 0; i < descriptorSets.size(); ++i)
         {
-            VkWriteDescriptorSet writeDescriptorSets[2];
+            std::array<VkWriteDescriptorSet, 2> writeDescriptorSets{};
 
             // Uniform buffer binding information
             VkDescriptorBufferInfo descriptorBufferInfo = VkDescriptorBufferInfo();
@@ -2229,7 +2231,11 @@ public:
             writeDescriptorSets[1].pImageInfo      = &descriptorImageInfo;
 
             // Update the descriptor set
-            vkUpdateDescriptorSets(device, 2, writeDescriptorSets, 0, nullptr);
+            vkUpdateDescriptorSets(device,
+                                   static_cast<std::uint32_t>(writeDescriptorSets.size()),
+                                   writeDescriptorSets.data(),
+                                   0,
+                                   nullptr);
         }
     }
 
@@ -2259,7 +2265,7 @@ public:
     void setupDraw()
     {
         // Set up our clear colors
-        VkClearValue clearColors[2];
+        std::array<VkClearValue, 2> clearColors{};
 
         // Clear color buffer to opaque black
         clearColors[0]                  = VkClearValue();
@@ -2279,8 +2285,8 @@ public:
         renderPassBeginInfo.renderArea.offset.x   = 0;
         renderPassBeginInfo.renderArea.offset.y   = 0;
         renderPassBeginInfo.renderArea.extent     = swapchainExtent;
-        renderPassBeginInfo.clearValueCount       = 2;
-        renderPassBeginInfo.pClearValues          = clearColors;
+        renderPassBeginInfo.clearValueCount       = static_cast<std::uint32_t>(clearColors.size());
+        renderPassBeginInfo.pClearValues          = clearColors.data();
 
         // Simultaneous use: this command buffer can be resubmitted to a queue before a previous submission is completed
         VkCommandBufferBeginInfo commandBufferBeginInfo = VkCommandBufferBeginInfo();
@@ -2579,47 +2585,47 @@ private:
     unsigned int       currentFrame{};
     bool               swapchainOutOfDate{};
 
-    VkInstance                      instance{};
-    VkDebugReportCallbackEXT        debugReportCallback{};
-    VkSurfaceKHR                    surface{};
-    VkPhysicalDevice                gpu{};
-    int                             queueFamilyIndex{-1};
-    VkDevice                        device{};
-    VkQueue                         queue{};
-    VkSurfaceFormatKHR              swapchainFormat{};
-    VkExtent2D                      swapchainExtent{};
-    VkSwapchainKHR                  swapchain{};
-    std::vector<VkImage>            swapchainImages;
-    std::vector<VkImageView>        swapchainImageViews;
-    VkFormat                        depthFormat{VK_FORMAT_UNDEFINED};
-    VkImage                         depthImage{};
-    VkDeviceMemory                  depthImageMemory{};
-    VkImageView                     depthImageView{};
-    VkShaderModule                  vertexShaderModule{};
-    VkShaderModule                  fragmentShaderModule{};
-    VkPipelineShaderStageCreateInfo shaderStages[2]{};
-    VkDescriptorSetLayout           descriptorSetLayout{};
-    VkPipelineLayout                pipelineLayout{};
-    VkRenderPass                    renderPass{};
-    VkPipeline                      graphicsPipeline{};
-    std::vector<VkFramebuffer>      swapchainFramebuffers;
-    VkCommandPool                   commandPool{};
-    VkBuffer                        vertexBuffer{};
-    VkDeviceMemory                  vertexBufferMemory{};
-    VkBuffer                        indexBuffer{};
-    VkDeviceMemory                  indexBufferMemory{};
-    std::vector<VkBuffer>           uniformBuffers;
-    std::vector<VkDeviceMemory>     uniformBuffersMemory;
-    VkImage                         textureImage{};
-    VkDeviceMemory                  textureImageMemory{};
-    VkImageView                     textureImageView{};
-    VkSampler                       textureSampler{};
-    VkDescriptorPool                descriptorPool{};
-    std::vector<VkDescriptorSet>    descriptorSets;
-    std::vector<VkCommandBuffer>    commandBuffers;
-    std::vector<VkSemaphore>        imageAvailableSemaphores;
-    std::vector<VkSemaphore>        renderFinishedSemaphores;
-    std::vector<VkFence>            fences;
+    VkInstance                                     instance{};
+    VkDebugReportCallbackEXT                       debugReportCallback{};
+    VkSurfaceKHR                                   surface{};
+    VkPhysicalDevice                               gpu{};
+    int                                            queueFamilyIndex{-1};
+    VkDevice                                       device{};
+    VkQueue                                        queue{};
+    VkSurfaceFormatKHR                             swapchainFormat{};
+    VkExtent2D                                     swapchainExtent{};
+    VkSwapchainKHR                                 swapchain{};
+    std::vector<VkImage>                           swapchainImages;
+    std::vector<VkImageView>                       swapchainImageViews;
+    VkFormat                                       depthFormat{VK_FORMAT_UNDEFINED};
+    VkImage                                        depthImage{};
+    VkDeviceMemory                                 depthImageMemory{};
+    VkImageView                                    depthImageView{};
+    VkShaderModule                                 vertexShaderModule{};
+    VkShaderModule                                 fragmentShaderModule{};
+    std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
+    VkDescriptorSetLayout                          descriptorSetLayout{};
+    VkPipelineLayout                               pipelineLayout{};
+    VkRenderPass                                   renderPass{};
+    VkPipeline                                     graphicsPipeline{};
+    std::vector<VkFramebuffer>                     swapchainFramebuffers;
+    VkCommandPool                                  commandPool{};
+    VkBuffer                                       vertexBuffer{};
+    VkDeviceMemory                                 vertexBufferMemory{};
+    VkBuffer                                       indexBuffer{};
+    VkDeviceMemory                                 indexBufferMemory{};
+    std::vector<VkBuffer>                          uniformBuffers;
+    std::vector<VkDeviceMemory>                    uniformBuffersMemory;
+    VkImage                                        textureImage{};
+    VkDeviceMemory                                 textureImageMemory{};
+    VkImageView                                    textureImageView{};
+    VkSampler                                      textureSampler{};
+    VkDescriptorPool                               descriptorPool{};
+    std::vector<VkDescriptorSet>                   descriptorSets;
+    std::vector<VkCommandBuffer>                   commandBuffers;
+    std::vector<VkSemaphore>                       imageAvailableSemaphores;
+    std::vector<VkSemaphore>                       renderFinishedSemaphores;
+    std::vector<VkFence>                           fences;
     // NOLINTEND(readability-identifier-naming)
 };
 

@@ -74,7 +74,7 @@ struct Matrix
     ////////////////////////////////////////////////////////////
     explicit Matrix(const float* pointer)
     {
-        copyMatrix(pointer, Columns * Rows, array);
+        copyMatrix(pointer, Columns * Rows, array.data());
     }
 
     ////////////////////////////////////////////////////////////
@@ -91,7 +91,7 @@ struct Matrix
         copyMatrix(transform, *this);
     }
 
-    float array[Columns * Rows]{}; //!< Array holding matrix data
+    std::array<float, Columns * Rows> array{}; //!< Array holding matrix data
 };
 
 ////////////////////////////////////////////////////////////

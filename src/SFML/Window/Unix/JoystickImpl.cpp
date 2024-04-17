@@ -400,14 +400,14 @@ std::string getJoystickName(unsigned int index)
     if (fd >= 0)
     {
         // Get the name
-        char name[128] = {};
+        std::array<char, 128> name{};
 
-        const int result = ioctl(fd, JSIOCGNAME(sizeof(name)), name);
+        const int result = ioctl(fd, JSIOCGNAME(name.size()), name.data());
 
         ::close(fd);
 
         if (result >= 0)
-            return name;
+            return name.data();
     }
 
     // Fall back to manual USB chain walk via udev
@@ -546,7 +546,7 @@ bool JoystickImpl::open(unsigned int index)
         if (m_file >= 0)
         {
             // Retrieve the axes mapping
-            ioctl(m_file, JSIOCGAXMAP, m_mapping);
+            ioctl(m_file, JSIOCGAXMAP, m_mapping.data());
 
             // Get info
             m_identification.name = getJoystickName(index);
@@ -598,7 +598,7 @@ JoystickCaps JoystickImpl::getCapabilities() const
     // Get the supported axes
     char axesCount;
     ioctl(m_file, JSIOCGAXES, &axesCount);
-    for (int i = 0; i < axesCount; ++i)
+    for (std::size_t i = 0; i < static_cast<std::size_t>(axesCount); ++i)
     {
         switch (m_mapping[i])
         {

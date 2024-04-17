@@ -49,6 +49,7 @@
 #include <X11/keysym.h>
 
 #include <algorithm>
+#include <array>
 #include <bitset>
 #include <fcntl.h>
 #include <filesystem>
@@ -85,8 +86,6 @@ std::vector<sf::priv::WindowImplX11*> allWindows;
 std::bitset<256>                      isKeyFiltered;
 std::recursive_mutex                  allWindowsMutex;
 sf::String                            windowManagerName;
-
-sf::String wmAbsPosGood[] = {"Enlightenment", "FVWM", "i3"};
 
 constexpr unsigned long eventMask = FocusChangeMask | ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
                                     PointerMotionMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask |
@@ -363,8 +362,9 @@ bool isWMAbsolutePositionGood()
     if (!ewmhSupported())
         return false;
 
-    return std::any_of(std::begin(wmAbsPosGood),
-                       std::end(wmAbsPosGood),
+    static const std::array<sf::String, 3> wmAbsPosGood = {"Enlightenment", "FVWM", "i3"};
+    return std::any_of(wmAbsPosGood.begin(),
+                       wmAbsPosGood.end(),
                        [&](const sf::String& name) { return name == windowManagerName; });
 }
 } // namespace WindowImplX11Impl
@@ -1841,13 +1841,13 @@ bool WindowImplX11::processEvent(XEvent& windowEvent)
 #ifdef X_HAVE_UTF8_STRING
                 if (m_inputContext)
                 {
-                    Status       status;
-                    std::uint8_t keyBuffer[64];
+                    Status                       status;
+                    std::array<std::uint8_t, 64> keyBuffer{};
 
                     const int length = Xutf8LookupString(m_inputContext,
                                                          &windowEvent.xkey,
-                                                         reinterpret_cast<char*>(keyBuffer),
-                                                         sizeof(keyBuffer),
+                                                         reinterpret_cast<char*>(keyBuffer.data()),
+                                                         keyBuffer.size(),
                                                          nullptr,
                                                          &status);
 
@@ -1861,10 +1861,10 @@ bool WindowImplX11::processEvent(XEvent& windowEvent)
                         // There might be more than 1 characters in this event,
                         // so we must iterate it
                         std::uint32_t unicode = 0;
-                        std::uint8_t* iter    = keyBuffer;
-                        while (iter < keyBuffer + length)
+                        std::uint8_t* iter    = keyBuffer.begin();
+                        while (iter < keyBuffer.begin() + length)
                         {
-                            iter = Utf8::decode(iter, keyBuffer + length, unicode, 0);
+                            iter = Utf8::decode(iter, keyBuffer.begin() + length, unicode, 0);
                             if (unicode != 0)
                             {
                                 Event textEvent;
@@ -1879,8 +1879,8 @@ bool WindowImplX11::processEvent(XEvent& windowEvent)
 #endif
                 {
                     static XComposeStatus status;
-                    char                  keyBuffer[16];
-                    if (XLookupString(&windowEvent.xkey, keyBuffer, sizeof(keyBuffer), nullptr, &status))
+                    std::array<char, 16>  keyBuffer{};
+                    if (XLookupString(&windowEvent.xkey, keyBuffer.data(), keyBuffer.size(), nullptr, &status))
                     {
                         Event textEvent;
                         textEvent.type         = Event::TextEntered;

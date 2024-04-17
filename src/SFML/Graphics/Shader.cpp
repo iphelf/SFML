@@ -39,6 +39,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/System/Vector3.hpp>
 
+#include <array>
 #include <fstream>
 #include <iomanip>
 #include <ostream>
@@ -563,7 +564,7 @@ void Shader::setUniform(const std::string& name, const Glsl::Mat3& matrix)
 {
     const UniformBinder binder(*this, name);
     if (binder.location != -1)
-        glCheck(GLEXT_glUniformMatrix3fv(binder.location, 1, GL_FALSE, matrix.array));
+        glCheck(GLEXT_glUniformMatrix3fv(binder.location, 1, GL_FALSE, matrix.array.data()));
 }
 
 
@@ -572,7 +573,7 @@ void Shader::setUniform(const std::string& name, const Glsl::Mat4& matrix)
 {
     const UniformBinder binder(*this, name);
     if (binder.location != -1)
-        glCheck(GLEXT_glUniformMatrix4fv(binder.location, 1, GL_FALSE, matrix.array));
+        glCheck(GLEXT_glUniformMatrix4fv(binder.location, 1, GL_FALSE, matrix.array.data()));
 }
 
 
@@ -673,7 +674,7 @@ void Shader::setUniformArray(const std::string& name, const Glsl::Mat3* matrixAr
 
     std::vector<float> contiguous(matrixSize * length);
     for (std::size_t i = 0; i < length; ++i)
-        priv::copyMatrix(matrixArray[i].array, matrixSize, &contiguous[matrixSize * i]);
+        priv::copyMatrix(matrixArray[i].array.data(), matrixSize, &contiguous[matrixSize * i]);
 
     const UniformBinder binder(*this, name);
     if (binder.location != -1)
@@ -688,7 +689,7 @@ void Shader::setUniformArray(const std::string& name, const Glsl::Mat4* matrixAr
 
     std::vector<float> contiguous(matrixSize * length);
     for (std::size_t i = 0; i < length; ++i)
-        priv::copyMatrix(matrixArray[i].array, matrixSize, &contiguous[matrixSize * i]);
+        priv::copyMatrix(matrixArray[i].array.data(), matrixSize, &contiguous[matrixSize * i]);
 
     const UniformBinder binder(*this, name);
     if (binder.location != -1)
@@ -822,9 +823,9 @@ bool Shader::compile(const char* vertexShaderCode, const char* geometryShaderCod
         glCheck(GLEXT_glGetObjectParameteriv(vertexShader, GLEXT_GL_OBJECT_COMPILE_STATUS, &success));
         if (success == GL_FALSE)
         {
-            char log[1024];
-            glCheck(GLEXT_glGetInfoLog(vertexShader, sizeof(log), nullptr, log));
-            err() << "Failed to compile vertex shader:" << '\n' << log << std::endl;
+            std::array<char, 1024> log{};
+            glCheck(GLEXT_glGetInfoLog(vertexShader, static_cast<GLsizei>(log.size()), nullptr, log.data()));
+            err() << "Failed to compile vertex shader:" << '\n' << log.data() << std::endl;
             glCheck(GLEXT_glDeleteObject(vertexShader));
             glCheck(GLEXT_glDeleteObject(shaderProgram));
             return false;
@@ -848,9 +849,9 @@ bool Shader::compile(const char* vertexShaderCode, const char* geometryShaderCod
         glCheck(GLEXT_glGetObjectParameteriv(geometryShader, GLEXT_GL_OBJECT_COMPILE_STATUS, &success));
         if (success == GL_FALSE)
         {
-            char log[1024];
-            glCheck(GLEXT_glGetInfoLog(geometryShader, sizeof(log), nullptr, log));
-            err() << "Failed to compile geometry shader:" << '\n' << log << std::endl;
+            std::array<char, 1024> log{};
+            glCheck(GLEXT_glGetInfoLog(geometryShader, static_cast<GLsizei>(log.size()), nullptr, log.data()));
+            err() << "Failed to compile geometry shader:" << '\n' << log.data() << std::endl;
             glCheck(GLEXT_glDeleteObject(geometryShader));
             glCheck(GLEXT_glDeleteObject(shaderProgram));
             return false;
@@ -875,9 +876,9 @@ bool Shader::compile(const char* vertexShaderCode, const char* geometryShaderCod
         glCheck(GLEXT_glGetObjectParameteriv(fragmentShader, GLEXT_GL_OBJECT_COMPILE_STATUS, &success));
         if (success == GL_FALSE)
         {
-            char log[1024];
-            glCheck(GLEXT_glGetInfoLog(fragmentShader, sizeof(log), nullptr, log));
-            err() << "Failed to compile fragment shader:" << '\n' << log << std::endl;
+            std::array<char, 1024> log{};
+            glCheck(GLEXT_glGetInfoLog(fragmentShader, static_cast<GLsizei>(log.size()), nullptr, log.data()));
+            err() << "Failed to compile fragment shader:" << '\n' << log.data() << std::endl;
             glCheck(GLEXT_glDeleteObject(fragmentShader));
             glCheck(GLEXT_glDeleteObject(shaderProgram));
             return false;
@@ -896,9 +897,9 @@ bool Shader::compile(const char* vertexShaderCode, const char* geometryShaderCod
     glCheck(GLEXT_glGetObjectParameteriv(shaderProgram, GLEXT_GL_OBJECT_LINK_STATUS, &success));
     if (success == GL_FALSE)
     {
-        char log[1024];
-        glCheck(GLEXT_glGetInfoLog(shaderProgram, sizeof(log), nullptr, log));
-        err() << "Failed to link shader:" << '\n' << log << std::endl;
+        std::array<char, 1024> log{};
+        glCheck(GLEXT_glGetInfoLog(shaderProgram, static_cast<GLsizei>(log.size()), nullptr, log.data()));
+        err() << "Failed to link shader:" << '\n' << log.data() << std::endl;
         glCheck(GLEXT_glDeleteObject(shaderProgram));
         return false;
     }

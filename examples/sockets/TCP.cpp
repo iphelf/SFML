@@ -32,17 +32,17 @@ void runTcpServer(unsigned short port)
     std::cout << "Client connected: " << socket.getRemoteAddress().value() << std::endl;
 
     // Send a message to the connected client
-    const char out[] = "Hi, I'm the server";
+    const char out[] = "Hi, I'm the server"; // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
     if (socket.send(out, sizeof(out)) != sf::Socket::Status::Done)
         return;
     std::cout << "Message sent to the client: " << std::quoted(out) << std::endl;
 
     // Receive a message back from the client
-    char        in[128];
-    std::size_t received;
-    if (socket.receive(in, sizeof(in), received) != sf::Socket::Status::Done)
+    std::array<char, 128> in{};
+    std::size_t           received;
+    if (socket.receive(in.data(), in.size(), received) != sf::Socket::Status::Done)
         return;
-    std::cout << "Answer received from the client: " << std::quoted(in) << std::endl;
+    std::cout << "Answer received from the client: " << std::quoted(in.data()) << std::endl;
 }
 
 
@@ -70,14 +70,14 @@ void runTcpClient(unsigned short port)
     std::cout << "Connected to server " << server.value() << std::endl;
 
     // Receive a message from the server
-    char        in[128];
-    std::size_t received;
-    if (socket.receive(in, sizeof(in), received) != sf::Socket::Status::Done)
+    std::array<char, 128> in{};
+    std::size_t           received;
+    if (socket.receive(in.data(), in.size(), received) != sf::Socket::Status::Done)
         return;
-    std::cout << "Message received from the server: " << std::quoted(in) << std::endl;
+    std::cout << "Message received from the server: " << std::quoted(in.data()) << std::endl;
 
     // Send an answer to the server
-    const char out[] = "Hi, I'm a client";
+    const char out[] = "Hi, I'm a client"; // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
     if (socket.send(out, sizeof(out)) != sf::Socket::Status::Done)
         return;
     std::cout << "Message sent to the server: " << std::quoted(out) << std::endl;

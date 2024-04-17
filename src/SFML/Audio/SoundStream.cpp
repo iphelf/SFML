@@ -274,7 +274,7 @@ void SoundStream::streamData()
     }
 
     // Create the buffers
-    alCheck(alGenBuffers(BufferCount, m_buffers));
+    alCheck(alGenBuffers(static_cast<ALsizei>(m_buffers.size()), m_buffers.data()));
     for (std::int64_t& bufferSeek : m_bufferSeeks)
         bufferSeek = NoLoop;
 
@@ -400,7 +400,7 @@ void SoundStream::streamData()
 
     // Delete the buffers
     alCheck(alSourcei(m_source, AL_BUFFER, 0));
-    alCheck(alDeleteBuffers(BufferCount, m_buffers));
+    alCheck(alDeleteBuffers(static_cast<ALsizei>(m_buffers.size()), m_buffers.data()));
 }
 
 

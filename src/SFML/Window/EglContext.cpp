@@ -32,6 +32,7 @@
 #include <SFML/System/Err.hpp>
 #include <SFML/System/Sleep.hpp>
 
+#include <array>
 #include <memory>
 #include <mutex>
 #include <ostream>
@@ -126,9 +127,9 @@ EglContext::EglContext(EglContext* shared)
 
     // Note: The EGL specs say that attribList can be a null pointer when passed to eglCreatePbufferSurface,
     // but this is resulting in a segfault. Bug in Android?
-    EGLint attribList[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
+    std::array<EGLint, 5> attribList = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
 
-    eglCheck(m_surface = eglCreatePbufferSurface(m_display, m_config, attribList));
+    eglCheck(m_surface = eglCreatePbufferSurface(m_display, m_config, attribList.data()));
 
     // Create EGL context
     createContext(shared);
@@ -260,7 +261,7 @@ void EglContext::setVerticalSyncEnabled(bool enabled)
 ////////////////////////////////////////////////////////////
 void EglContext::createContext(EglContext* shared)
 {
-    const EGLint contextVersion[] = {EGL_CONTEXT_CLIENT_VERSION, 1, EGL_NONE};
+    const std::array<EGLint, 3> contextVersion = {EGL_CONTEXT_CLIENT_VERSION, 1, EGL_NONE};
 
     EGLContext toShared;
 

@@ -40,7 +40,7 @@
 
 namespace
 {
-FLAC__StreamDecoderReadStatus streamRead(const FLAC__StreamDecoder*, FLAC__byte buffer[], std::size_t* bytes, void* clientData)
+FLAC__StreamDecoderReadStatus streamRead(const FLAC__StreamDecoder*, FLAC__byte* buffer, std::size_t* bytes, void* clientData)
 {
     auto* data = static_cast<sf::priv::SoundFileReaderFlac::ClientData*>(clientData);
 
@@ -111,9 +111,9 @@ FLAC__bool streamEof(const FLAC__StreamDecoder*, void* clientData)
 }
 
 FLAC__StreamDecoderWriteStatus streamWrite(const FLAC__StreamDecoder*,
-                                           const FLAC__Frame*       frame,
-                                           const FLAC__int32* const buffer[],
-                                           void*                    clientData)
+                                           const FLAC__Frame*        frame,
+                                           const FLAC__int32* const* buffer,
+                                           void*                     clientData)
 {
     auto* data = static_cast<sf::priv::SoundFileReaderFlac::ClientData*>(clientData);
 

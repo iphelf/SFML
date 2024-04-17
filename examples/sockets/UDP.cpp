@@ -3,6 +3,7 @@
 ////////////////////////////////////////////////////////////
 #include <SFML/Network.hpp>
 
+#include <array>
 #include <iomanip>
 #include <iostream>
 #include <optional>
@@ -25,16 +26,16 @@ void runUdpServer(unsigned short port)
     std::cout << "Server is listening to port " << port << ", waiting for a message... " << std::endl;
 
     // Wait for a message
-    char                         in[128];
+    std::array<char, 128>        in{};
     std::size_t                  received;
     std::optional<sf::IpAddress> sender;
     unsigned short               senderPort;
-    if (socket.receive(in, sizeof(in), received, sender, senderPort) != sf::Socket::Status::Done)
+    if (socket.receive(in.data(), in.size(), received, sender, senderPort) != sf::Socket::Status::Done)
         return;
-    std::cout << "Message received from client " << sender.value() << ": " << std::quoted(in) << std::endl;
+    std::cout << "Message received from client " << sender.value() << ": " << std::quoted(in.data()) << std::endl;
 
     // Send an answer to the client
-    const char out[] = "Hi, I'm the server";
+    const char out[] = "Hi, I'm the server"; // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
     if (socket.send(out, sizeof(out), sender.value(), senderPort) != sf::Socket::Status::Done)
         return;
     std::cout << "Message sent to the client: " << std::quoted(out) << std::endl;
@@ -59,17 +60,17 @@ void runUdpClient(unsigned short port)
     sf::UdpSocket socket;
 
     // Send a message to the server
-    const char out[] = "Hi, I'm a client";
+    const char out[] = "Hi, I'm a client"; // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
     if (socket.send(out, sizeof(out), server.value(), port) != sf::Socket::Status::Done)
         return;
     std::cout << "Message sent to the server: " << std::quoted(out) << std::endl;
 
     // Receive an answer from anyone (but most likely from the server)
-    char                         in[128];
+    std::array<char, 128>        in{};
     std::size_t                  received;
     std::optional<sf::IpAddress> sender;
     unsigned short               senderPort;
-    if (socket.receive(in, sizeof(in), received, sender, senderPort) != sf::Socket::Status::Done)
+    if (socket.receive(in.data(), in.size(), received, sender, senderPort) != sf::Socket::Status::Done)
         return;
-    std::cout << "Message received from " << sender.value() << ": " << std::quoted(in) << std::endl;
+    std::cout << "Message received from " << sender.value() << ": " << std::quoted(in.data()) << std::endl;
 }

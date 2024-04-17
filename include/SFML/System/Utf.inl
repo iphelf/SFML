@@ -110,7 +110,7 @@ template <typename Out>
 Out Utf<8>::encode(std::uint32_t input, Out output, std::uint8_t replacement)
 {
     // Some useful precomputed data
-    static constexpr std::uint8_t firstBytes[7] = {0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC};
+    static constexpr std::array<std::uint8_t, 7> firstBytes = {0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC};
 
     // encode the character
     if ((input > 0x0010FFFF) || ((input >= 0xD800) && (input <= 0xDBFF)))
@@ -134,7 +134,7 @@ Out Utf<8>::encode(std::uint32_t input, Out output, std::uint8_t replacement)
         // clang-format on
 
         // Extract the bytes to write
-        std::byte bytes[4];
+        std::array<std::byte, 4> bytes{};
 
         // clang-format off
         switch (bytestoWrite)
@@ -147,7 +147,7 @@ Out Utf<8>::encode(std::uint32_t input, Out output, std::uint8_t replacement)
         // clang-format on
 
         // Add them to the output
-        output = priv::copy(bytes, bytes + bytestoWrite, output);
+        output = priv::copy(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(bytestoWrite), output);
     }
 
     return output;

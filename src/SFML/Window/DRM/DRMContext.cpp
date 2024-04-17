@@ -32,6 +32,7 @@
 #include <SFML/System/Err.hpp>
 #include <SFML/System/Sleep.hpp>
 
+#include <array>
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
@@ -159,13 +160,13 @@ DrmFb* drmFbGetFromBo(gbm_bo& bo)
     const std::uint32_t height = gbm_bo_get_height(&bo);
     const std::uint32_t format = gbm_bo_get_format(&bo);
 
-    std::uint32_t strides[4]   = {0};
-    std::uint32_t handles[4]   = {0};
-    std::uint32_t offsets[4]   = {0};
-    std::uint64_t modifiers[4] = {0};
-    modifiers[0]               = gbm_bo_get_modifier(&bo);
-    const int numPlanes        = gbm_bo_get_plane_count(&bo);
-    for (int i = 0; i < numPlanes; ++i)
+    std::array<std::uint32_t, 4> strides{};
+    std::array<std::uint32_t, 4> handles{};
+    std::array<std::uint32_t, 4> offsets{};
+    std::array<std::uint64_t, 4> modifiers{};
+    modifiers[0]         = gbm_bo_get_modifier(&bo);
+    const auto numPlanes = static_cast<std::size_t>(gbm_bo_get_plane_count(&bo));
+    for (std::size_t i = 0; i < numPlanes; ++i)
     {
         strides[i]   = gbm_bo_get_stride_for_plane(&bo, i);
         handles[i]   = gbm_bo_get_handle(&bo).u32;
@@ -273,11 +274,9 @@ int hasMonitorConnected(int fd, drmModeRes& resources)
 
 int findDrmDevice(drmModeResPtr& resources)
 {
-    static const int maxDrmDevices = 64;
+    std::array<drmDevicePtr, 64> devices{};
 
-    drmDevicePtr devices[maxDrmDevices] = {};
-
-    const int numDevices = drmGetDevices2(0, devices, maxDrmDevices);
+    const int numDevices = drmGetDevices2(0, devices.data(), devices.size());
     if (numDevices < 0)
     {
         sf::err() << "drmGetDevices2 failed: " << std::strerror(-numDevices) << std::endl;
@@ -285,7 +284,7 @@ int findDrmDevice(drmModeResPtr& resources)
     }
 
     int fileDescriptor = -1;
-    for (int i = 0; i < numDevices; ++i)
+    for (std::size_t i = 0; i < static_cast<std::size_t>(numDevices); ++i)
     {
         drmDevicePtr device = devices[i];
         int          result = 0;
@@ -305,7 +304,7 @@ int findDrmDevice(drmModeResPtr& resources)
         close(fileDescriptor);
         fileDescriptor = -1;
     }
-    drmFreeDevices(devices, numDevices);
+    drmFreeDevices(devices.data(), numDevices);
 
     if (fileDescriptor < 0)
         sf::err() << "No drm device found!" << std::endl;
@@ -690,7 +689,7 @@ void DRMContext::setVerticalSyncEnabled(bool enabled)
 ////////////////////////////////////////////////////////////
 void DRMContext::createContext(DRMContext* shared)
 {
-    const EGLint contextVersion[] = {EGL_CONTEXT_CLIENT_VERSION, 1, EGL_NONE};
+    const std::array<EGLint, 3> contextVersion = {EGL_CONTEXT_CLIENT_VERSION, 1, EGL_NONE};
 
     EGLContext toShared;
 
@@ -703,7 +702,7 @@ void DRMContext::createContext(DRMContext* shared)
         eglMakeCurrent(m_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
     // Create EGL context
-    eglCheck(m_context = eglCreateContext(m_display, m_config, toShared, contextVersion));
+    eglCheck(m_context = eglCreateContext(m_display, m_config, toShared, contextVersion.data()));
     if (m_context == EGL_NO_CONTEXT)
         err() << "Failed to create EGL context" << std::endl;
 }
@@ -756,7 +755,7 @@ void DRMContext::destroySurface()
 EGLConfig DRMContext::getBestConfig(EGLDisplay display, unsigned int bitsPerPixel, const ContextSettings& settings)
 {
     // Set our video settings constraint
-    const EGLint attributes[] =
+    const std::array attributes =
     { EGL_BUFFER_SIZE,
       static_cast<EGLint>(bitsPerPixel),
       EGL_DEPTH_SIZE,
@@ -785,11 +784,11 @@ EGLConfig DRMContext::getBestConfig(EGLDisplay display, unsigned int bitsPerPixe
 #endif
       EGL_NONE };
 
-    EGLint    configCount;
-    EGLConfig configs[1];
+    EGLint                   configCount;
+    std::array<EGLConfig, 1> configs{};
 
     // Ask EGL for the best config matching our video settings
-    eglCheck(eglChooseConfig(display, attributes, configs, 1, &configCount));
+    eglCheck(eglChooseConfig(display, attributes, configs.data(), configs.size(), &configCount));
 
     return configs[0];
 }
