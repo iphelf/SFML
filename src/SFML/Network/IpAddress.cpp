@@ -156,11 +156,10 @@ std::optional<IpAddress> IpAddress::getPublicAddress(Time timeout)
 {
     // The trick here is more complicated, because the only way
     // to get our public IP address is to get it from a distant computer.
-    // Here we get the web page from http://www.sfml-dev.org/ip-provider.php
-    // and parse the result to extract our IP address
-    // (not very hard: the web page contains only our IP address).
+    // Here we get the web page from https://ipinfo.io and parse the
+    // result to extract our IP address.
 
-    Http                 server("www.sfml-dev.org");
+    Http                 server("ipinfo.io");
     const Http::Request  request("/ip-provider.php", Http::Request::Method::Get);
     const Http::Response page = server.sendRequest(request, timeout);
     if (page.getStatus() == Http::Response::Status::Ok)
