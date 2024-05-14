@@ -7,3 +7,13 @@ Permission is granted to anyone to use this software for any purpose, including 
   1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software.  If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
   2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
+
+## External libraries used by SFML
+
+  * _OpenAL-Soft_ is under the LGPL license
+  * _stb_image_ and _stb_image_write_ are public domain
+  * _freetype_ is under the FreeType license or the GPL license
+  * _libogg_ is under the BSD license
+  * _libvorbis_ is under the BSD license
+  * _libflac_ is under the BSD license
+  * _dr\_mp3_ is public domain
