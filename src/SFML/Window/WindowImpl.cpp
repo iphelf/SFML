@@ -175,42 +175,58 @@ void WindowImpl::setMaximumSize(const std::optional<Vector2u>& maximumSize)
 
 
 ////////////////////////////////////////////////////////////
-Event WindowImpl::popEvent(bool block)
+void WindowImpl::populateEventQueue()
+{
+    processJoystickEvents();
+    processSensorEvents();
+    processEvents();
+}
+
+
+////////////////////////////////////////////////////////////
+Event WindowImpl::popEventBlocking()
 {
     // If the event queue is empty, let's first check if new events are available from the OS
     if (m_events.empty())
     {
-        // Get events from the system
-        processJoystickEvents();
-        processSensorEvents();
-        processEvents();
-
-        // In blocking mode, we must process events until one is triggered
-        if (block)
-        {
-            // Here we use a manual wait loop instead of the optimized
-            // wait-event provided by the OS, so that we don't skip joystick
-            // events (which require polling)
-            while (m_events.empty())
-            {
-                sleep(milliseconds(10));
-                processJoystickEvents();
-                processSensorEvents();
-                processEvents();
-            }
-        }
+        populateEventQueue();
     }
 
-    Event event;
+    // Here we use a manual wait loop instead of the optimized
+    // wait-event provided by the OS, so that we don't skip joystick
+    // events (which require polling)
+    while (m_events.empty())
+    {
+        sleep(milliseconds(10));
+        populateEventQueue();
+    }
+
+    Event result = m_events.front();
+    m_events.pop();
+
+    return result;
+}
+
+
+////////////////////////////////////////////////////////////
+std::optional<Event> WindowImpl::popEventNonBlocking()
+{
+    // If the event queue is empty, let's first check if new events are available from the OS
+    if (m_events.empty())
+    {
+        populateEventQueue();
+    }
+
+    std::optional<Event> result; // Use a single local variable for NRVO
 
     // Pop the first event of the queue, if it is not empty
-    if (!m_events.empty())
-    {
-        event = m_events.front();
-        m_events.pop();
-    }
+    if (m_events.empty())
+        return result; // Empty optional
 
-    return event;
+    result.emplace(m_events.front());
+    m_events.pop();
+
+    return result;
 }
 
 

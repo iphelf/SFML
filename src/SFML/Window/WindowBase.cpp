@@ -43,6 +43,7 @@
 #include <vector>
 
 #include <cassert>
+#include <cstdlib>
 
 
 namespace
@@ -71,7 +72,7 @@ WindowBase::WindowBase(VideoMode mode, const String& title, std::uint32_t style,
 ////////////////////////////////////////////////////////////
 WindowBase::WindowBase(VideoMode mode, const String& title, State state)
 {
-    WindowBase::create(mode, title, sf::Style::Default, state);
+    WindowBase::create(mode, title, Style::Default, state);
 }
 
 
@@ -146,11 +147,17 @@ bool WindowBase::isOpen() const
 
 
 ////////////////////////////////////////////////////////////
-Event WindowBase::pollEvent()
+std::optional<Event> WindowBase::pollEvent()
 {
-    Event event;
-    if (m_impl && (event = m_impl->popEvent(false)))
-        filterEvent(event);
+    std::optional<Event> event; // Use a single local variable for NRVO
+
+    if (m_impl == nullptr)
+        return event; // Empty optional
+
+    event = m_impl->popEventNonBlocking();
+    if (event.has_value())
+        filterEvent(*event);
+
     return event;
 }
 
@@ -158,9 +165,11 @@ Event WindowBase::pollEvent()
 ////////////////////////////////////////////////////////////
 Event WindowBase::waitEvent()
 {
-    Event event;
-    if (m_impl && (event = m_impl->popEvent(true)))
-        filterEvent(event);
+    // If the window is already closed, generate an artificial closed event to break out of
+    // the user's event handling loop
+    Event event = (m_impl == nullptr) ? Event::Closed{} : m_impl->popEventBlocking();
+
+    filterEvent(event);
     return event;
 }
 
